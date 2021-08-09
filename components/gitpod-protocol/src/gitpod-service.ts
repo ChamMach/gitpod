@@ -270,7 +270,7 @@ export interface ProviderRepository {
     installationId?: number;
     installationUpdatedAt?: string;
 
-    inUse?: boolean;
+    inUse?: { userName: string };
 }
 
 export interface ClientHeaderFields {
