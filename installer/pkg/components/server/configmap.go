@@ -7,6 +7,8 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	corev1 "k8s.io/api/core/v1"
@@ -16,6 +18,11 @@ import (
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	jwtSecret, err := common.RandomString(20)
+	if err != nil {
+		return nil, err
+	}
+
+	cookieSecret, err := common.RandomString(32)
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +49,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			DefaultFeatureFlags: []NamedWorkspaceFeatureFlag{},
 		},
 		Session: Session{
-			MaxAgeMs: 259200000,
-			Secret:   "Important!Really-Change-This-Key!", // todo(sje): how best to do this?
+			MaxAgeMs: int32((time.Hour * 24 * 3).Milliseconds()),
+			Secret:   cookieSecret,
 		},
 		DefinitelyGpDisabled: false,
 		WorkspaceGarbageCollection: WorkspaceGarbageCollection{
@@ -62,49 +69,66 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Logo:     "/images/gitpod-ddd.svg",
 			Homepage: fmt.Sprintf("https://%s/", ctx.Config.Domain),
 			Links: BrandingLinks{
-				Header: []Link{{
-					Name: "Workspaces",
-					URL:  "/workspaces/",
-				}, {
-					Name: "Docs",
-					URL:  "https://www.gitpod.io/docs/",
-				}, {
-					Name: "Blog",
-					URL:  "https://www.gitpod.io/blog/",
-				}, {
-					Name: "Community",
-					URL:  "https://community.gitpod.io/",
-				}},
-				Footer: []Link{{
-					Name: "Docs",
-					URL:  "https://www.gitpod.io/docs/",
-				}, {
-					Name: "Blog",
-					URL:  "https://www.gitpod.io/blog/",
-				}, {
-					Name: "Status",
-					URL:  "https://status.gitpod.io/",
-				}},
-				Social: []SocialLink{{
-					Type: "GitHub",
-					URL:  "https://github.com/gitpod-io/gitpod",
-				}, {
-					Type: "Discourse",
-					URL:  "https://community.gitpod.io/",
-				}, {
-					Type: "Twitter",
-					URL:  "https://twitter.com/gitpod",
-				}},
-				Legal: []Link{{
-					Name: "Imprint",
-					URL:  "https://www.gitpod.io/imprint/",
-				}, {
-					Name: "Privacy Policy",
-					URL:  "https://www.gitpod.io/privacy/",
-				}, {
-					Name: "Terms of Service",
-					URL:  "https://www.gitpod.io/terms/",
-				}},
+				Header: []Link{
+					{
+						Name: "Workspaces",
+						URL:  "/workspaces/",
+					},
+					{
+						Name: "Docs",
+						URL:  "https://www.gitpod.io/docs/",
+					},
+					{
+						Name: "Blog",
+						URL:  "https://www.gitpod.io/blog/",
+					},
+					{
+						Name: "Community",
+						URL:  "https://community.gitpod.io/",
+					},
+				},
+				Footer: []Link{
+					{
+						Name: "Docs",
+						URL:  "https://www.gitpod.io/docs/",
+					},
+					{
+						Name: "Blog",
+						URL:  "https://www.gitpod.io/blog/",
+					},
+					{
+						Name: "Status",
+						URL:  "https://status.gitpod.io/",
+					},
+				},
+				Social: []SocialLink{
+					{
+						Type: "GitHub",
+						URL:  "https://github.com/gitpod-io/gitpod",
+					},
+					{
+						Type: "Discourse",
+						URL:  "https://community.gitpod.io/",
+					},
+					{
+						Type: "Twitter",
+						URL:  "https://twitter.com/gitpod",
+					},
+				},
+				Legal: []Link{
+					{
+						Name: "Imprint",
+						URL:  "https://www.gitpod.io/imprint/",
+					},
+					{
+						Name: "Privacy Policy",
+						URL:  "https://www.gitpod.io/privacy/",
+					},
+					{
+						Name: "Terms of Service",
+						URL:  "https://www.gitpod.io/terms/",
+					},
+				},
 			},
 		},
 		MaxEnvvarPerUserCount:             4048,
