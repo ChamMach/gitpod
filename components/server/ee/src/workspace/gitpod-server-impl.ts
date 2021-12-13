@@ -1440,25 +1440,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         for (const repo of repositories) {
             const p = cloneUrlToProject.get(repo.cloneUrl);
             if (p) {
-                let ownerId = p.userId;
-                if (ownerId === user.id) {
-                    break;
-                }
-                if (!ownerId && p.teamId) {
-                    const members = await this.teamDB.findMembersByTeam(p.teamId);
-                    if (members.find(m => m.userId === user.id)) {
-                        break;
-                    }
-                    members.sort((a, b) => a.memberSince.localeCompare(b.memberSince));
-                    ownerId = members[0]?.userId;
-                }
-                if (ownerId) {
-                    const owner = await this.userDB.findUserById(ownerId);
+                if (p.userId) {
+                    const owner = await this.userDB.findUserById(p.userId);
                     if (owner) {
                         repo.inUse = {
-                            userId : owner.id,
                             userName: owner?.name || owner?.fullName || 'somebody'
                         }
+                    }
+                } else if (p.owners && p.owners[0]) {
+                    repo.inUse = {
+                        userName: p.owners[0] || 'somebody'
                     }
                 }
             }

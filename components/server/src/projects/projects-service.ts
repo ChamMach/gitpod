@@ -36,7 +36,7 @@ export class ProjectsService {
         return this.projectDB.findUserProjects(userId);
     }
 
-    async getProjectsByCloneUrls(cloneUrls: string[]): Promise<Project[]> {
+    async getProjectsByCloneUrls(cloneUrls: string[]): Promise<(Project & { owners?: string[] })[]> {
         return this.projectDB.findProjectsByCloneUrls(cloneUrls);
     }
 
