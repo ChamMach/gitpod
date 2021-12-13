@@ -53,6 +53,7 @@ import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { CachingBlobServiceClientProvider } from '@gitpod/content-service/lib/sugar';
 import { IDEOptions } from '@gitpod/gitpod-protocol/lib/ide-protocol';
 import { IDEConfigService } from '../ide-config';
+import { ClientMetadata } from '../websocket/websocket-connection-manager';
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi);    // userId is already taken care of in WebsocketConnectionManager
@@ -110,6 +111,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
+    public readonly clientMetadata: ClientMetadata;
     protected clientHeaderFields: ClientHeaderFields;
     protected resourceAccessGuard: ResourceAccessGuard;
     protected client: GitpodApiClient | undefined;
@@ -122,7 +124,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.disposables.dispose();
     }
 
-    initialize(client: GitpodApiClient | undefined, user: User | undefined, accessGuard: ResourceAccessGuard, clientHeaderFields: ClientHeaderFields): void {
+    initialize(client: GitpodApiClient | undefined, user: User | undefined, accessGuard: ResourceAccessGuard, clientMetadata: ClientMetadata, clientHeaderFields: ClientHeaderFields): void {
         if (client) {
             this.disposables.push(Disposable.create(() => this.client = undefined));
         }
@@ -130,6 +132,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.user = user;
         this.resourceAccessGuard = accessGuard;
         this.clientHeaderFields = clientHeaderFields;
+        (this.clientMetadata as any) = clientMetadata;
 
         log.debug({ userId: this.user?.id }, `clientRegion: ${clientHeaderFields.clientRegion}`);
         log.debug({ userId: this.user?.id }, 'initializeClient');
