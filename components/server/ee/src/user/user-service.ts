@@ -11,10 +11,16 @@ import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { AuthException } from "../../../src/auth/errors";
 import { EligibilityService } from "./eligibility-service";
+import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
+import { OssWhitelistDB } from "@gitpod/gitpod-db/lib/oss-whitelist-db";
+import { HostContextProvider } from "../../../src/auth/host-context-provider";
 
 export class UserServiceEE extends UserService {
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
+    @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
+    @inject(OssWhitelistDB) protected readonly ossWhitelistDb: OssWhitelistDB;
+    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
 
     async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
         if (this.config.enablePayment) {
@@ -63,4 +69,16 @@ export class UserServiceEE extends UserService {
         return true;
     }
 
+    async checkAutomaticOssEligibility(user: User): Promise<boolean> {
+        const idsWithHost = user.identities.map(id => {
+            const hostContext = this.hostContextProvider.findByAuthProviderId(id.authProviderId);
+            if (!hostContext) {
+                return undefined;
+            }
+            const info = hostContext.authProvider.info;
+            return `${info.host}/${id.authName}`;
+        }).filter(i => !!i) as string[];
+
+        return this.ossWhitelistDb.hasAny(idsWithHost);
+    }
 }

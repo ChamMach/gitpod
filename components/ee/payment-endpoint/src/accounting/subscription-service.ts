@@ -85,6 +85,27 @@ export class SubscriptionService {
         });
     }
 
+    /**
+     * Subscribes the given user to the "Professional Open Source" plan if they don't already have either:
+     *  - the Professional Open Source plan
+     *  - another paid plan
+     * @param user
+     * @param now
+     * @returns a subscription if that is blocking assignment of the OSS subscription
+     */
+    async checkAndSubscribeToOssSubscription(user: User, now: Date): Promise<Subscription | undefined> {
+        const userId = user.id;
+
+        const subs = await this.getNotYetCancelledSubscriptions(user, now.toISOString());
+        const uncancelledPaidOrOssSub = subs.find(s => (!Plans.isFreePlan(s.planId) || s.planId === Plans.FREE_OPEN_SOURCE.chargebeeId) && !s.cancellationDate);
+        if (uncancelledPaidOrOssSub) {
+            return uncancelledPaidOrOssSub;
+        }
+
+        await this.subscribe(userId, Plans.FREE_OPEN_SOURCE, undefined, now.toISOString());
+        return undefined;
+    }
+
     async addCredit(userId: string, amount: number, date: string, expiryDate?: string): Promise<AccountEntry> {
         const entry = <AccountEntry> {
             userId, amount, date, expiryDate, kind: 'credit'

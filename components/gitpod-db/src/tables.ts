@@ -244,6 +244,12 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             deletionColumn: 'deleted',
             timeColumn: '_lastModified',
         },
+        {
+            name: 'd_b_oss_whitelist',
+            primaryKeys: ['identity'],
+            deletionColumn: 'deleted',
+            timeColumn: '_lastModified',
+        },
     ]
 
     public getSortedTables(): TableDescription[] {
